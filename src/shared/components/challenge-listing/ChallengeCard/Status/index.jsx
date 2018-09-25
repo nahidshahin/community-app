@@ -97,14 +97,12 @@ export default function ChallengeStatus(props) {
       openChallengesInNewTabs,
     } = props;
 
-    let winners = _.map(
-      challenge.winners,
-      winner => ({
+    let winners = challenge.winners && challenge.winners.filter(winner => winner.type === 'final')
+      .map(winner => ({
         handle: winner.handle,
         position: winner.placement,
         photoURL: winner.photoURL,
-      }),
-    );
+      }));
 
     if (winners && winners.length > MAX_VISIBLE_WINNERS) {
       const lastItem = {
@@ -139,13 +137,17 @@ export default function ChallengeStatus(props) {
           </UserAvatarTooltip>
         </div>);
     });
+    let resultsLink = detailLink;
+    if (challenge.challengeType === 'Marathon') {
+      resultsLink = `${config.URL.COMMUNITY}/longcontest/?module=ViewStandings&rd=${_.get(challenge, 'rounds[0].id')}`;
+    }
 
     return leaderboard || (
       <Link
         onClick={() => (
           setImmediate(() => selectChallengeDetailsTab(DETAIL_TABS.SUBMISSIONS))
         )}
-        to={detailLink}
+        to={resultsLink}
       >
 Results
       </Link>

@@ -5,7 +5,7 @@ import PT from 'prop-types';
 import TrackIcon from 'components/TrackIcon';
 import { TABS as DETAIL_TABS } from 'actions/page/challenge-details';
 import { convertNow as convertMoney } from 'services/money';
-import { Link } from 'topcoder-react-utils';
+import { config, Link } from 'topcoder-react-utils';
 
 import Tags from '../Tags';
 
@@ -20,6 +20,9 @@ export const PRIZE_MODE = {
   MONEY_INR: 'money-inr',
   MONEY_USD: 'money-usd',
 };
+
+// Constants
+const ID_LENGTH = 6;
 
 // Get the End date of a challenge
 const getEndDate = (c) => {
@@ -55,13 +58,22 @@ function ChallengeCard({
     challenge.isDataScience = true;
   }
   challenge.prize = challenge.prizes || [];
-
-  const {
-    id,
-    subTrack,
-  } = challenge;
-
-  const challengeDetailLink = `${challengesUrl}/${id}`;
+  // challenge.totalPrize = challenge.prize.reduce((x, y) => y + x, 0)
+  const isMM = _.toString(challenge.id).length < ID_LENGTH;
+  let challengeDetailLink;
+  {
+    const challengeUrl = newChallengeDetails
+      ? `${challengesUrl}/` : `${config.URL.BASE}/challenge-details/`;
+    if (challenge.track === 'DATA_SCIENCE') {
+      const mmDetailUrl = `${config.URL.COMMUNITY}/tc?module=MatchDetails&rd=`;
+      /* TODO: Don't we have a better way, whether a challenge is MM or not? */
+      challengeDetailLink = isMM
+        ? `${mmDetailUrl}${challenge.rounds[0].id}`
+        : `${challengeUrl}${challenge.id}`;
+    } else {
+      challengeDetailLink = `${challengeUrl}${challenge.id}`;
+    }
+  }
 
   const registrationPhase = challenge.allPhases.filter(phase => phase.phaseType === 'Registration')[0];
   const isRegistrationOpen = registrationPhase ? registrationPhase.phaseStatus === 'Open' : false;
@@ -106,14 +118,11 @@ function ChallengeCard({
     <div styleName="challengeCard">
       <div styleName="left-panel">
         <div styleName="challenge-track">
-          <TrackAbbreviationTooltip
-            subTrack={subTrack}
-            track={challenge.track}
-          >
+          <TrackAbbreviationTooltip track={challenge.track} subTrack={challenge.subTrack}>
             <span>
               <TrackIcon
                 track={challenge.track}
-                subTrack={subTrack}
+                subTrack={challenge.subTrack}
                 tcoEligible={challenge.events ? challenge.events[0].eventName : ''}
                 isDataScience={challenge.isDataScience}
               />
@@ -123,6 +132,7 @@ function ChallengeCard({
 
         <div styleName={isRegistrationOpen ? 'challenge-details with-register-button' : 'challenge-details'}>
           <Link
+            enforceA={isMM}
             onClick={() => selectChallengeDetailsTab(DETAIL_TABS.DETAILS)}
             to={challengeDetailLink}
             styleName="challenge-title"

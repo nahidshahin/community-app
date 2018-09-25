@@ -2,15 +2,12 @@
  * components.page.challenge-details.submission Index Component
  *
  * Description:
- *   Top-level component for the Develop or Design submission components.
- *   Primary purpose is to choose between the above components based on project type
- *   and pass properties from Redux store to the component.
+ *   Top-level component for the Submit component.
  */
 import React from 'react';
 import PT from 'prop-types';
 import Header from './Header';
-import Design from './Design';
-import Develop from './Develop';
+import Submit from './Submit';
 import './styles.scss';
 
 /**
@@ -22,8 +19,6 @@ function SubmissionsPage(props) {
     challengeName,
     challengesUrl,
     status,
-    subTrack,
-    track,
   } = props;
   return (
     <div styleName="container">
@@ -34,14 +29,8 @@ function SubmissionsPage(props) {
           title={challengeName}
         />
         {
-          (track === 'DEVELOP' || subTrack === 'MARATHON_MATCH')
-          && status === 'ACTIVE'
-          && <Develop {...props} />
-        }
-        {
-          track === 'DESIGN'
-          && status === 'ACTIVE'
-          && <Design {...props} />
+          status === 'ACTIVE'
+          && <Submit {...props} />
         }
       </div>
     </div>
@@ -65,8 +54,16 @@ SubmissionsPage.propTypes = {
   challengesUrl: PT.string.isRequired,
   challengeId: PT.number.isRequired,
   challengeName: PT.string.isRequired,
+  communitiesList: PT.shape({
+    data: PT.arrayOf(PT.shape({
+      challengeFilter: PT.shape(),
+      communityId: PT.string.isRequired,
+    })).isRequired,
+    loadingUuid: PT.string.isRequired,
+    timestamp: PT.number.isRequired,
+  }).isRequired,
+  groups: PT.shape({}).isRequired,
   track: PT.string.isRequired,
-  subTrack: PT.string.isRequired,
   status: PT.string.isRequired,
   submitForm: PT.func.isRequired,
   resetForm: PT.func.isRequired,
@@ -85,11 +82,7 @@ SubmissionsPage.propTypes = {
   setFilePickerFileName: PT.func.isRequired,
   setFilePickerDragged: PT.func.isRequired,
   setSubmissionFilestackData: PT.func.isRequired,
-  setSourceFilestackData: PT.func.isRequired,
-  setPreviewFilestackData: PT.func.isRequired,
   submissionFilestackData: filestackDataProp.isRequired,
-  sourceFilestackData: filestackDataProp.isRequired,
-  previewFilestackData: filestackDataProp.isRequired,
 };
 
 export default SubmissionsPage;

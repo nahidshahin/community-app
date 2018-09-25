@@ -17,8 +17,11 @@ export default function Prize({
   prizeUnitSymbol,
   totalPrize,
   withoutTooltip,
+  isMM,
 }) {
   const component = (
+    !isMM
+    && (
     <div>
       <div styleName="prize">
         <span styleName="symbol">
@@ -30,6 +33,7 @@ export default function Prize({
         {label}
       </div>
     </div>
+    )
   );
   if (withoutTooltip) return component;
   const tip = (
@@ -50,6 +54,7 @@ Prize.defaultProps = {
   bonuses: [],
   prizes: [],
   withoutTooltip: false,
+  isMM: false,
 };
 
 Prize.propTypes = {
@@ -59,4 +64,5 @@ Prize.propTypes = {
   prizeUnitSymbol: PT.string.isRequired,
   totalPrize: PT.number.isRequired,
   withoutTooltip: PT.bool,
+  isMM: PT.bool,
 };

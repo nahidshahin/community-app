@@ -16,7 +16,7 @@ import requireContext from 'require-context';
 
 import Select from 'components/Select';
 import { PrimaryButton } from 'topcoder-react-ui-kit';
-import UserConsentModal from 'components/Settings/UserConsentModal';
+import ConsentComponent from 'components/Settings/ConsentComponent';
 import DevFallbackIcon from 'assets/images/profile/skills/id-develop.svg';
 import DesignFallbackIcon from 'assets/images/profile/skills/id-design.svg';
 import DataFallbackIcon from 'assets/images/profile/skills/id-data.svg';
@@ -58,21 +58,21 @@ function imageExist(imageFile) {
   return (isomorphy.isClientSide() && assets.keys().includes(`./${imageFile}`)) || assets.keys().includes(imageFile);
 }
 
-export default class Skills extends React.Component {
+export default class Skills extends ConsentComponent {
   constructor(props) {
     super(props);
+    this.onHandleAddSkill = this.onHandleAddSkill.bind(this);
     this.onAddSkill = this.onAddSkill.bind(this);
     this.onUpdateSelect = this.onUpdateSelect.bind(this);
     this.toggleSkill = this.toggleSkill.bind(this);
     this.setPage = this.setPage.bind(this);
     this.updatePredicate = this.updatePredicate.bind(this);
-    this.onShowUserConsent = this.onShowUserConsent.bind(this);
     this.loadPersonalizationTrait = this.loadPersonalizationTrait.bind(this);
 
+    const { userTraits } = props;
     this.state = {
       formInvalid: false,
-      showUserConsent: false,
-      personalizationTrait: this.loadPersonalizationTrait(props.userTraits),
+      personalizationTrait: this.loadPersonalizationTrait(userTraits),
       errorMessage: '',
       userSkills: [],
       selectedSkill: {},
@@ -127,7 +127,7 @@ export default class Skills extends React.Component {
    * Show User Consent Modal
    * @param e event
    */
-  onShowUserConsent(e) {
+  onHandleAddSkill(e) {
     e.preventDefault();
     const { selectedSkill } = this.state;
     if (!selectedSkill.name) {
@@ -141,8 +141,8 @@ export default class Skills extends React.Component {
     this.setState({
       errorMessage: '',
       formInvalid: false,
-      showUserConsent: true,
     });
+    this.showConsent(this.onAddSkill.bind(this));
   }
 
   /**
@@ -159,12 +159,9 @@ export default class Skills extends React.Component {
 
   /**
    * Add new skill
-   * @param e form submit event
    * @param answer user consent answer value
    */
-  onAddSkill(e, answer) {
-    e.preventDefault();
-    this.setState({ showUserConsent: false });
+  onAddSkill(answer) {
     const { newSkill, selectedSkill, personalizationTrait } = this.state;
     const {
       handle,
@@ -288,7 +285,7 @@ export default class Skills extends React.Component {
       if (currentIndex < totalPage) {
         this.setState({
           indexList:
-          filterUserSkills.slice(currentIndex * pageSize, currentIndex * pageSize + pageSize),
+            filterUserSkills.slice(currentIndex * pageSize, currentIndex * pageSize + pageSize),
         });
       } else {
         this.setState({
@@ -341,7 +338,6 @@ export default class Skills extends React.Component {
     } = this.props;
 
     const {
-      showUserConsent,
       userSkills,
       formInvalid,
       errorMessage,
@@ -356,14 +352,14 @@ export default class Skills extends React.Component {
     const currentTab = settingsUI.currentProfileTab;
     const containerStyle = currentTab === tabs.SKILL ? '' : 'hide';
     // All lookup skills
-    const lookupSkills = lookupData.skillTags || [];
+    const lookupSkills = lookupData.skillTags ? _.sortBy(lookupData.skillTags, s => s.name) : [];
     const buttons = userSkills.slice(0, totalPage);
     const list = isMobileView ? indexList : userSkills;
 
     return (
       <div styleName={containerStyle}>
         {
-          showUserConsent && (<UserConsentModal onSaveTrait={this.onAddSkill} />)
+          this.shouldRenderConsent() && this.renderConsent()
         }
         <div styleName={`skill-container ${list.length > 0 ? '' : 'no-skills'}`}>
           <div styleName={`error-message ${formInvalid ? 'active' : ''}`}>
@@ -372,41 +368,8 @@ export default class Skills extends React.Component {
           <h1>
             Skill
           </h1>
-          <div styleName={`form-container ${list.length > 0 ? '' : 'no-skills'}`}>
-            <form name="skill-form" noValidate autoComplete="off">
-              <div styleName="row">
-                <p>
-                  Add Skill
-                </p>
-              </div>
-              <div styleName="row">
-                <div styleName="field">
-                  <label htmlFor="skills">
-                    Skill
-                  </label>
-                  <Select
-                    name="skills"
-                    options={lookupSkills}
-                    onChange={this.onUpdateSelect}
-                    placeholder="Start typing a skill then select from the list"
-                    matchPos="start"
-                    matchProp="name"
-                    labelKey="name"
-                    valueKey="name"
-                    clearable={false}
-                    value={selectedSkill.name}
-                  />
-                </div>
-              </div>
-            </form>
-            <div styleName="button-save">
-              <PrimaryButton
-                styleName="complete"
-                onClick={this.onShowUserConsent}
-              >
-                Add Skill
-              </PrimaryButton>
-            </div>
+          <div styleName={`sub-title ${list.length > 0 ? '' : 'hidden'}`}>
+            Your skills
           </div>
           <div styleName={`skill-list ${list.length > 0 ? '' : 'hide'}`}>
             <ul>
@@ -453,6 +416,79 @@ export default class Skills extends React.Component {
                 })
               }
             </ul>
+          </div>
+          <div styleName={`sub-title ${list.length > 0 ? 'second' : 'first'}`}>
+            Add a new skill
+          </div>
+          <div styleName="form-container-default">
+            <form name="device-form" noValidate autoComplete="off">
+              <div styleName="row">
+                <div styleName="field col-1">
+                  <label htmlFor="skill">
+                    Skill
+                  </label>
+                </div>
+                <div styleName="field col-2">
+                  <span styleName="text-required">* Required</span>
+                  <Select
+                    name="skills"
+                    options={lookupSkills}
+                    onChange={this.onUpdateSelect}
+                    placeholder="Start typing a skill then select from the list"
+                    matchPos="start"
+                    matchProp="name"
+                    labelKey="name"
+                    valueKey="name"
+                    clearable={false}
+                    value={selectedSkill.name}
+                  />
+                </div>
+              </div>
+            </form>
+            <div styleName="button-save">
+              <PrimaryButton
+                styleName="complete"
+                onClick={this.onHandleAddSkill}
+              >
+                Add skill to your list
+              </PrimaryButton>
+            </div>
+          </div>
+          <div styleName={`form-container-mobile ${list.length > 0 ? '' : 'no-skills'}`}>
+            <form name="skill-form" noValidate autoComplete="off">
+              <div styleName="row">
+                <p>
+                  Add Skill
+                </p>
+              </div>
+              <div styleName="row">
+                <div styleName="field">
+                  <label htmlFor="skills">
+                    Skill
+                  </label>
+                  <Select
+                    name="skills"
+                    options={lookupSkills}
+                    onChange={this.onUpdateSelect}
+                    placeholder="Start typing a skill then select from the list"
+                    matchPos="start"
+                    matchProp="name"
+                    labelKey="name"
+                    valueKey="name"
+                    clearable={false}
+                    value={selectedSkill.name}
+                  />
+                </div>
+              </div>
+            </form>
+            <div styleName="button-save">
+              <PrimaryButton
+                styleName="complete"
+                onClick={this.onHandleAddSkill}
+              >
+                Add Skill
+              </PrimaryButton>
+            </div>
           </div>
           {
             isMobileView && (
